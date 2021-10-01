@@ -1,0 +1,1 @@
+make clean && make && cpct_winape -a
