@@ -21,30 +21,36 @@
 ;; Just to know how our entities are created
 
 ;;The sprite is 4 bytes width, 6 bytes height, so 24 bytes
-m_sprite: .ds 24
+m_sprite: .ds 30
 
-m_sprite_size = 24
+m_sprite_size = 30
 
 m_sprite_mothership:
-        .db #0xFF
-        .db #0xFF
-        .db #0xFF
         .db #0x00
         .db #0xFF
         .db #0xFF
         .db #0xFF
         .db #0x00
-        .db #0xFF
-        .db #0xFF
-        .db #0xFF
         .db #0x00
         .db #0xFF
         .db #0xFF
         .db #0xFF
         .db #0x00
+        .db #0x00
         .db #0xFF
         .db #0xFF
         .db #0xFF
+        .db #0x00
+        .db #0x00
+        .db #0xFF
+        .db #0xFF
+        .db #0xFF
+        .db #0x00
+        .db #0x00
+        .db #0xFF
+        .db #0xFF
+        .db #0xFF
+        .db #0x00
         .db #0x00
         .db #0xFF
         .db #0xFF
@@ -56,9 +62,9 @@ mothership_tmpl:
 	.db 3	    ; type -> e_type_movable | e_type_render
 	.db 38	    ; pos_x
 	.db 10	    ; pos_y
-	.db 4       ; width  ;; TODO: This should change using the variables of sprites
+	.db 5       ; width  ;; TODO: This should change using the variables of sprites
 	.db 6       ; width  ;; TODO: This should change using the variables of sprites
-	.db -1	    ; vel_x
+	.db 0	    ; vel_x
 	.db 0       ; vel_y
 	.dw m_sprite;sprite  ;; TODO: We should include the sprite generated and change this
 
@@ -66,7 +72,7 @@ playership_tmpl:
 	.db 7	    ; type -> e_type_movable | e_type_render | e_type_controllable
 	.db 38	    ; pos_x
 	.db 180	    ; pos_y
-	.db 4       ; width  ;; TODO: This should change using the variables of sprites
+	.db 5       ; width  ;; TODO: This should change using the variables of sprites
 	.db 6       ; width  ;; TODO: This should change using the variables of sprites
 	.db 0	    ; vel_x
 	.db 0       ; vel_y
@@ -76,7 +82,7 @@ playership_lifes_tmpl:
 	.db 1	    ; type -> e_type_render
 	.db 0	    ; pos_x
 	.db 192	    ; pos_y
-	.db 4       ; width  ;; TODO: This should change using the variables of sprites
+	.db 5       ; width  ;; TODO: This should change using the variables of sprites
 	.db 6       ; width  ;; TODO: This should change using the variables of sprites
 	.db 0	    ; vel_x
 	.db 0       ; vel_y
@@ -105,45 +111,34 @@ man_game_init::
     ld hl, #playership_tmpl
     call man_game_create_template_entity
 
-    ;;TODO: this is not working, take a look
-    ;;Player lifes HUD
+
+    ;;TODO: This from here
     ld hl, #playership_lifes_tmpl
-    ld ix, #10
-    ld a, #30
-    push af
-    ;; How much should a decrease --> IX
-        loop_create_template_entity:
-        call man_game_create_template_entity
-        ;;Positioning the next entity 10 bytes to the right, DE contains the entity direction        
-        pop af
+    call man_game_create_template_entity
 
-        inc de
-        ld (de), a
-        dec de
-
-        ;; A -= 10
-        dec a
-        dec a
-        dec a
-        dec a
-        dec a
-        dec a
-        dec a
-        dec a
-        dec a
-        dec a
+    inc de
+    ld a, #20
+    ld (de), a
+    dec de 
 
 
-        ;;call dec_a_number
+    ld hl, #playership_lifes_tmpl
+    call man_game_create_template_entity
 
-        push af
+    inc de
+    ld a, #10
+    ld (de), a
+    dec de 
 
-    jr nz, loop_create_template_entity
+
+    ld hl, #playership_lifes_tmpl
+    call man_game_create_template_entity
+    ;;To here should be changed for a loop
 ret
 man_game_play::
     game_loop:
 
-	;;call sys_physics_update
+	call sys_physics_update
 	call sys_render_update
 	call man_entity_update
 	call cpct_waitVSYNC_asm

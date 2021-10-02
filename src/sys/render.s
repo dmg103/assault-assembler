@@ -4,10 +4,12 @@
 .globl cpct_drawSprite_asm
 .globl cpct_setPalette_asm
 
-.globl man_entity_forall
+.globl man_entity_forall_matching
 
 ;;States of an entity
 .globl entity_type_dead
+.globl entity_type_render
+.globl entity_type_controllable
 
 ;;Maths utilities
 .globl inc_hl_number
@@ -46,7 +48,13 @@ ret
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sys_render_update::
     ld de, #sys_render_one_entity
-    call man_entity_forall
+
+    ;;BC will contain the signature for the man_entity_forall_matching
+    ld bc, #0x0000
+    ld a, #entity_type_render
+    ld c, a
+
+    call man_entity_forall_matching
 ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

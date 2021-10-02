@@ -86,12 +86,18 @@ ret
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pre requirements
 ;;  - de: should contain the memory direction for the given function to be called
+;;  - bc: should contain the signature to know if we should exec the function or not
+;;        BC SHOULD BE INTO THE STACK
+;;  - SIGNATURE: (the group of bytes activated as 1 to know if we should exec the function)
+;;  - Example: (SIGNATURE = 0000 0011 --> this means the entity is renderable and movable,
+;;              if the entity match those settings the function will be executed)
 ;;
 ;; Objetive: For all the entities, execute the function given by the systems
+;; if the type of the entity is the same as the signature
 ;;
 ;; Modifies: (Probably almost all the entities)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   
-man_entity_forall::
+man_entity_forall_matching::
     ld hl, #m_entities
     ;;Keeping the function adress in a variable to use it.
     ld (m_function_given_forall), de
@@ -100,13 +106,24 @@ man_entity_forall::
     ld d, #0x00
         repeat_man_entity_forall:
 
-        ;;Compare against type to know if we should continue looping
+        ;;Compare against type_invalid to know if we should continue looping
         ld a, (hl)
         add a, #0x00 
         jr z, entity_no_valid
 
-        ;;Call the funcion given registered in m_function_given_forall
+        ;;Check if the type of the entity is the same as the signature
+        ld a, (hl)
+        and c                           ;;A contains now the result of entity->type & signature
 
+        ;;If the signature is the same as the entity type, the result of entity->type - signature = 0
+        sub c
+
+        jr nz, entity_no_matching_signature
+
+        ;;In case the signature is the same, we want to keep bc without any change
+        push bc         
+
+        ;;Call the funcion given registered in m_function_given_forall
 		ld ix, #position_after_function_given
 		push ix
 
@@ -115,6 +132,9 @@ man_entity_forall::
         
 		position_after_function_given:
 
+        pop bc
+
+        entity_no_matching_signature:
         ;;Add entity_size to hl to move to the reach the next entity available
         ld a, #entity_size
         call inc_hl_number
