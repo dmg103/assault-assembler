@@ -1,3 +1,36 @@
+.include "cpctelera.h.s"
+
+.area _DATA
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; """""Variables""""
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+m_entities: .ds 90                    ;;Reserved memory for the entities array
+m_zero_type_at_the_end: .db #0x00       ;;Trick for stop the loop of entities, positioned
+max_entities: .db 10                    ;;Num of maximum entities
+m_next_free_entity: .ds 2               ;;Reserved memory for the pointer of the next free entity
+m_num_entities: .db 0                   ;;Current number of entities
+m_function_given_forall: .dw #0x0000    ;;Memory direction of the function that we want to execute
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Global variables
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+entity_size = 9 ;; 31 bytes = 24bytes de sprite + 7bytes datos
+entity_type_invalid = 0x00
+entity_type_render = 0x01 ;;Lower bit signals renderable entity
+entity_type_movable = 0x02 ;;Second bit signals movable entity
+entity_type_input = 0x04 ;;Third bit signals input controlled entity
+entity_type_ai = 0x08 ;;Fourth bit signals AI entity
+entity_type_dead = 0x80 ;;Upper bit signals dead entity
+entity_type_default = 0x7F  ;;Default entity (all bits = 1 but the one to signal dead)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;Entity struct:
+;;  - type, x, y, w, h, vx, vy, sprite
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.area _CODE
+
 
 .globl cpct_memset_asm
 .globl cpct_memcpy_asm
@@ -5,29 +38,6 @@
 ;;Maths utilities
 .globl inc_hl_number
 .globl dec_bc_number
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; """""Variables""""
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-m_entities: .ds 108                     ;;Reserved memory for the entities array
-m_zero_type_at_the_end: .db #0x00       ;;Trick for stop the loop of entities, positioned
-max_entities: .db 12                    ;;Num of maximum entities
-m_next_free_entity: .ds 2               ;;Reserved memory for the pointer of the next free entity
-m_num_entities: .db 0                   ;;Current number of entities
-m_function_given_forall: .dw #0x0000    ;;Memory direction of the function that we want to execute
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Global constant variables
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-entity_size                 = 9             ;;Total size of one entity
-entities_total_size         = 108           ;;Total size of the array of entites
-entity_type_invalid         = 0x00          ;;Invalid entity type
-entity_type_render          = 0x01          ;;Renderable entity
-entity_type_movable         = 0x02          ;;Movable entity
-entity_type_controllable    = 0x04          ;;Entity controllable by input
-entity_type_dead            = 0x80          ;;Upper bit signals dead entity
-entity_type_default         = 0x7F         ;;Default entity (all bits = 1 but the one to signal dead)
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pre requirements
@@ -41,8 +51,9 @@ man_entity_init::
 
     ;;Filling up with zeros
     ld de, #m_entities
-    ld a, #0x00 
-    ld bc, #entities_total_size
+    ld a, #0x00
+    ;;TODO: Se supone que aqui deberia poner (#m_entities) pero si lo pongo no funciona
+    ld bc, #0x1F
 
     call cpct_memset_asm
     
@@ -54,11 +65,11 @@ ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pre requirements
-;;  -
+;;  - b contais the size of the entity
 ;; Objetive: Create a new entity, increase the number of entities
 ;; and update the next_free_entity
 ;;
-;; Modifies: de, bc, hl
+;; Modifies: a, de, bc, hl
 ;;
 ;; Returns: In de, returns the direction of the entity created
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   
@@ -66,10 +77,9 @@ man_entity_create::
     ;;Saving the next free memory direction of m_entities into de
     ld de, (m_next_free_entity)
 
-    ld bc, #entity_size
+    ;;ld bc, #entity_size
     ld hl, (m_next_free_entity)
 
-    ;;Used to not modify a
     push af
 
     ;;Increase the num of entities 
@@ -86,44 +96,24 @@ ret
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pre requirements
 ;;  - de: should contain the memory direction for the given function to be called
-;;  - bc: should contain the signature to know if we should exec the function or not
-;;        BC SHOULD BE INTO THE STACK
-;;  - SIGNATURE: (the group of bytes activated as 1 to know if we should exec the function)
-;;  - Example: (SIGNATURE = 0000 0011 --> this means the entity is renderable and movable,
-;;              if the entity match those settings the function will be executed)
 ;;
 ;; Objetive: For all the entities, execute the function given by the systems
-;; if the type of the entity is the same as the signature
 ;;
 ;; Modifies: (Probably almost all the entities)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   
-man_entity_forall_matching::
+man_entity_forall::
     ld hl, #m_entities
     ;;Keeping the function adress in a variable to use it.
     ld (m_function_given_forall), de
-
-    ld de, (#max_entities)
-    ld d, #0x00
         repeat_man_entity_forall:
 
-        ;;Compare against type_invalid to know if we should continue looping
+        ;;Compare against type to know if we should continue looping
         ld a, (hl)
         add a, #0x00 
         jr z, entity_no_valid
 
-        ;;Check if the type of the entity is the same as the signature
-        ld a, (hl)
-        and c                           ;;A contains now the result of entity->type & signature
-
-        ;;If the signature is the same as the entity type, the result of entity->type - signature = 0
-        sub c
-
-        jr nz, entity_no_matching_signature
-
-        ;;In case the signature is the same, we want to keep bc without any change
-        push bc         
-
         ;;Call the funcion given registered in m_function_given_forall
+
 		ld ix, #position_after_function_given
 		push ix
 
@@ -132,6 +122,50 @@ man_entity_forall_matching::
         
 		position_after_function_given:
 
+        ;;Add entity_size to hl to move to the reach the next entity available
+        ld a, #entity_size
+        call inc_hl_number
+
+    jr repeat_man_entity_forall
+    entity_no_valid:
+ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Pre requirements
+;;  - de: should contain the memory direction for the given function to be called
+;;  - bc: contains a signature that needs to be true to call the function in de
+;; Objetive: For all the entities, execute the function given by the systems
+;;
+;; Modifies: (Probably almost all the entities)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   
+man_entity_forall_matching::
+    ld hl, #m_entities
+    ;;Keeping the function adress in a variable to use it.
+    ld (m_function_given_forall), de
+        repeat_man_entity_forall_matching:
+
+        ;;Compare against type to know if we should continue looping
+        ld a, (hl)
+        add a, #0x00 
+        jr z, entity_no_valid_matching
+
+        ;if ((e->type & signature) == signature)
+            ;;call function given
+        ld a, (hl)
+        and c           ;;a contains now the result of entity->type & signature
+        sub c           ;;entity->type - signature = 0, entity matching
+        jr nz, entity_no_matching_signature
+
+        push bc ;;we keep the signature
+
+        ;;Call the funcion given registered in m_function_given_forall
+		ld ix, #position_after_function_given_matching
+		push ix
+
+		ld ix, (#m_function_given_forall)
+		jp (ix)
+        
+		position_after_function_given_matching:
         pop bc
 
         entity_no_matching_signature:
@@ -139,10 +173,8 @@ man_entity_forall_matching::
         ld a, #entity_size
         call inc_hl_number
 
-        ;;Decrement a to loop among the entities
-        dec e
-    jr nz, repeat_man_entity_forall
-    entity_no_valid:
+    jr repeat_man_entity_forall_matching
+    entity_no_valid_matching:
 ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -154,10 +186,6 @@ ret
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
 man_entity_update::
     ld hl, #m_entities
-
-    ;;Looping through all the actives entities
-    ld de, (#max_entities)
-    ld d, #0x00
     repeat_man_entity_update:
 
         ;;Compare against type to know if we should continue looping -->TODO: creo que si quito este bucle igual deberia funcionar igual
@@ -182,8 +210,8 @@ man_entity_update::
             call man_entity_destroy
             pop de
         continue:
-        dec e
-    jr nz, repeat_man_entity_update
+        
+    jr repeat_man_entity_update
 
     no_update_entity_no_valid:
 ret
