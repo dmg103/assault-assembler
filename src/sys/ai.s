@@ -128,7 +128,36 @@ sys_ai_behaviour_left_right::
     call dec_hl_number         ;;HL pointing to entity type again
 ret
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Pre requirements
+;;  - HL: (FIRST ON THE STACK!!) should contain the memory direction of the entity we want to update the render
+;; Objetive: Update the AI with the behaviour of moving left and right.
+;; Updating the vel depending on which border is the entity colliding with
+;;
+;; Modifies: a, b
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+sys_ai_behaviour_mothership::
 
+    ;;pop hl
+
+    ;;inc hl 
+
+    ;;ld d, (hl) 
+    ;;Check if the pos_x is == 20, if pos_x & 20 == 1 -> create enemy
+    ;;ld a, #20
+    ;;and d
+
+    ;;dec hl
+
+    ;;jr z, no_create_enemy 
+
+    ;;call man_game_create_enemy
+    ;;no_create_enemy:
+
+    ;;push hl
+
+    call sys_ai_behaviour_left_right
+ret
 
     
 
