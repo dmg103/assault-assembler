@@ -35,18 +35,57 @@ ret
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pre requirements
 ;;  - HL: should contain the memory direction of the entity we want to update the render
-;; Objetive: Update the AI for one entity.
+;; Objetive: Update the AI for one entity. Call the behaviour of the entity
 ;;
-;; Modifies: a, d
+;; Modifies: a, de
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sys_ai_update_one_entity:
 
+    ld a, #9
+    call inc_hl_number          ;;HL pointing to the ai_behaviour
+
+    ld de, #position_after_ai_behaviour
+    push de
+
+    ;;As an example, ai_behaviour is contains the function registered in C840
+
+    ld d, (hl)                     ;;D contains C8
+
+    inc hl
+
+    ld e, (hl)                     ;;E contains 40
+
+    ld a, #10
+    call dec_hl_number          ;;HL pointing to the ai_behaviour
+
+    push hl
+
+    ld h, d
+    ld l, e
+
+    ;;As the result, DE contains C840
+    ;;Having stored the position of the ai_behaviour jump into that behaviour, depending on the entity 
+    jp(hl)
+
+    position_after_ai_behaviour:
+ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Pre requirements
+;;  - HL: (FIRST ON THE STACK!!) should contain the memory direction of the entity we want to update the render
+;; Objetive: Update the AI with the behaviour of moving left and right.
+;; Updating the vel depending on which border is the entity colliding with
+;;
+;; Modifies: a, b
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+sys_ai_behaviour_left_right::
+
+    pop hl
+
     inc hl                      ;;HL pointing to the entity pos_x
 
-    ld d, (hl)                  ;;D contains the pos_x of the entity
-    ld a, #0x00
-    
-    add a, d
+    ld a, #0x00    
+    add a, (hl)
     jr z, on_left_border        ;;Check if the entity is on the left border
 
     ;;D still contains the the pos_x of the entity
@@ -56,46 +95,40 @@ sys_ai_update_one_entity:
     inc hl
     inc hl                      ;;HL pointing towards the width of the entity
 
-    ld d, (hl)                  ;;D contains the width of the entity
-
-    sub d                       ;;A contains the right_bound
+    sub (hl)                    ;;Now, A contains the right_bound
 
     dec hl
     dec hl                      ;;HL pointing towards the pos_x of the entity
 
-    ld d, (hl)                  ;;D contains the pos_x of the entity
-
-    sub d                       ;;Right_bound - e->pos_x if == 0 Right_bound == e->pos_x
+    sub (hl)                    ;;Right_bound - e->pos_x if == 0 Right_bound == e->pos_x
 
     jr z, on_right_border
 
     dec hl                      ;;HL pointing towards the entity type
 
-    jr ai_totally_updated
+    ret
 
     on_left_border:
 
-    ld a, #0x04
-    call inc_hl_number         ;;HL pointing to entity vel_x
+    ld b, #0x01
 
-    ld (hl), #0x01
-
-    jr hl_back_to_type
+    jr update_the_ai_vel
     on_right_border:
 
+    ld b, #0xFF
+
+    update_the_ai_vel:
+
     ld a, #0x04
     call inc_hl_number         ;;HL pointing to entity vel_x
 
-    ld (hl), #0xFF
-
-    hl_back_to_type:
+    ld (hl), b                 ;;B contains the new vel_x
 
     ld a, #0x05
-    call dec_hl_number          ;;HL pointing to entity type again
-
-
-    ai_totally_updated:
+    call dec_hl_number         ;;HL pointing to entity type again
 ret
+
+
 
     
 

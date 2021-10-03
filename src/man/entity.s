@@ -9,9 +9,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; """""Variables""""
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-m_entities: .ds 108                     ;;Reserved memory for the entities array
+m_entities: .ds 110                     ;;Reserved memory for the entities array
 m_zero_type_at_the_end: .db #0x00       ;;Trick for stop the loop of entities, positioned
-max_entities: .db 12                    ;;Num of maximum entities
+max_entities: .db 10                    ;;Num of maximum entities
 m_next_free_entity: .ds 2               ;;Reserved memory for the pointer of the next free entity
 m_num_entities: .db 0                   ;;Current number of entities
 m_function_given_forall: .dw #0x0000    ;;Memory direction of the function that we want to execute
@@ -19,7 +19,7 @@ m_function_given_forall: .dw #0x0000    ;;Memory direction of the function that 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global constant variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-entity_size                 = 9             ;;Total size of one entity
+entity_size                 = 11            ;;Total size of one entity
 entities_total_size         = 108           ;;Total size of the array of entites
 entity_type_invalid         = 0x00          ;;Invalid entity type
 entity_type_render          = 0x01          ;;Renderable entity

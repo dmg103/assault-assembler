@@ -14,6 +14,9 @@
 .globl sys_render_update
 .globl sys_ai_update
 
+;;AI behaviour functions
+.globl sys_ai_behaviour_left_right
+
 .globl entity_size
 
 ;; Just to know how our entities are created
@@ -24,69 +27,32 @@ m_sprite: .ds 30
 m_sprite_size = 30
 
 m_sprite_mothership:
-        .db #0x00
-        .db #0xFF
-        .db #0xFF
-        .db #0xFF
-        .db #0x00
-        .db #0x00
-        .db #0xFF
-        .db #0xFF
-        .db #0xFF
-        .db #0x00
-        .db #0x00
-        .db #0xFF
-        .db #0xFF
-        .db #0xFF
-        .db #0x00
-        .db #0x00
-        .db #0xFF
-        .db #0xFF
-        .db #0xFF
-        .db #0x00
-        .db #0x00
-        .db #0xFF
-        .db #0xFF
-        .db #0xFF
-        .db #0x00
-        .db #0x00
-        .db #0xFF
-        .db #0xFF
-        .db #0xFF
-        .db #0x00
-        
-
-mothership_tmpl:
-	.db 11	    ; type -> e_type_movable | e_type_render | e_type_ai
-	.db 38	    ; pos_x
-	.db 10	    ; pos_y
-	.db 5       ; width  ;; TODO: This should change using the variables of sprites
-	.db 6       ; height  ;; TODO: This should change using the variables of sprites
-	.db -1	    ; vel_x
-	.db 0       ; vel_y
-	.dw m_sprite;sprite  ;; TODO: We should include the sprite generated and change this
-
-playership_tmpl:
-	.db 7	    ; type -> e_type_movable | e_type_render | e_type_controllable
-	.db 38	    ; pos_x
-	.db 180	    ; pos_y
-	.db 5       ; width  ;; TODO: This should change using the variables of sprites
-	.db 6       ; height  ;; TODO: This should change using the variables of sprites
-	.db 0	    ; vel_x
-	.db 0       ; vel_y
-	.dw m_sprite;sprite  ;; TODO: We should include the sprite generated and change this
-
-playership_lifes_tmpl:
-	.db 1	    ; type -> e_type_render
-	.db 0	    ; pos_x
-	.db 192	    ; pos_y
-	.db 5       ; width  ;; TODO: This should change using the variables of sprites
-	.db 6       ; height  ;; TODO: This should change using the variables of sprites
-	.db 0	    ; vel_x
-	.db 0       ; vel_y
-	.dw m_sprite;sprite  ;; TODO: We should include the sprite generated and change this
+        .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
+        .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
+        .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
+        .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
+        .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
+        .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
 
 
+;;Macro for creation of entity templates _
+.macro DEFINE_ENTITY_TEMPLATE _name, _type, _pos_x, _pos_y, _width, _height, _vel_x, _vel_y, _sprite, _ai_behaviour
+_name:
+    .db _type           ; type -> e_type_movable | e_type_render | e_type_ai
+    .db _pos_x          ; pos_x
+    .db _pos_y          ; pos_y
+    .db _width          ; width  ;; TODO: This should change using the variables of sprites
+    .db _height         ; height  ;; TODO: This should change using the variables of sprites
+    .db _vel_x          ; vel_x
+    .db _vel_y          ; vel_y
+    .dw _sprite         ; sprite TODO: We should include the sprite generated and change this
+    .dw _ai_behaviour   ;ai_behaviour (The memory direction for the function behaviour of the AI)
+.endm
+
+
+DEFINE_ENTITY_TEMPLATE mothership_tmpl,        11, 38,  10, 5, 6, -1, 0, m_sprite, sys_ai_behaviour_left_right
+DEFINE_ENTITY_TEMPLATE playership_tmpl,        7, 38, 180, 5, 6,  0, 0, m_sprite, 0x0000
+DEFINE_ENTITY_TEMPLATE playership_lifes_tmpl,  1,  0, 192, 5, 6,  0, 0, m_sprite, 0x0000
 
 man_game_init::
     call man_entity_init
