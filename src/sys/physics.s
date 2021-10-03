@@ -19,7 +19,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pre requirements
 ;;  -
-;; Objetive: Update the physics for all the entities
+;; Objetive: Update the physics for all the entities matching with the signature
 ;; Modifies: de
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sys_physics_update::

@@ -43,7 +43,7 @@ ret
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pre requirements
 ;;  -
-;; Objetive: Update the render for all the entities
+;; Objetive: Update the render for all the entities matching with the signature
 ;; Modifies: de
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sys_render_update::

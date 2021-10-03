@@ -25,6 +25,7 @@ entity_type_invalid         = 0x00          ;;Invalid entity type
 entity_type_render          = 0x01          ;;Renderable entity
 entity_type_movable         = 0x02          ;;Movable entity
 entity_type_controllable    = 0x04          ;;Entity controllable by input
+entity_type_ai              = 0x08          ;;Entity controllabe by AI
 entity_type_dead            = 0x80          ;;Upper bit signals dead entity
 entity_type_default         = 0x7F         ;;Default entity (all bits = 1 but the one to signal dead)
 

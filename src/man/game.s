@@ -12,15 +12,13 @@
 .globl sys_physics_update
 .globl sys_render_init
 .globl sys_render_update
+.globl sys_ai_update
 
 .globl entity_size
 
-;;Math utilities
-.globl dec_a_number
-
 ;; Just to know how our entities are created
 
-;;The sprite is 4 bytes width, 6 bytes height, so 24 bytes
+;;The sprite is 4 bytes width, 6 bytesub height, so 24 bytes
 m_sprite: .ds 30
 
 m_sprite_size = 30
@@ -59,12 +57,12 @@ m_sprite_mothership:
         
 
 mothership_tmpl:
-	.db 3	    ; type -> e_type_movable | e_type_render
+	.db 11	    ; type -> e_type_movable | e_type_render | e_type_ai
 	.db 38	    ; pos_x
 	.db 10	    ; pos_y
 	.db 5       ; width  ;; TODO: This should change using the variables of sprites
-	.db 6       ; width  ;; TODO: This should change using the variables of sprites
-	.db 0	    ; vel_x
+	.db 6       ; height  ;; TODO: This should change using the variables of sprites
+	.db -1	    ; vel_x
 	.db 0       ; vel_y
 	.dw m_sprite;sprite  ;; TODO: We should include the sprite generated and change this
 
@@ -73,7 +71,7 @@ playership_tmpl:
 	.db 38	    ; pos_x
 	.db 180	    ; pos_y
 	.db 5       ; width  ;; TODO: This should change using the variables of sprites
-	.db 6       ; width  ;; TODO: This should change using the variables of sprites
+	.db 6       ; height  ;; TODO: This should change using the variables of sprites
 	.db 0	    ; vel_x
 	.db 0       ; vel_y
 	.dw m_sprite;sprite  ;; TODO: We should include the sprite generated and change this
@@ -83,7 +81,7 @@ playership_lifes_tmpl:
 	.db 0	    ; pos_x
 	.db 192	    ; pos_y
 	.db 5       ; width  ;; TODO: This should change using the variables of sprites
-	.db 6       ; width  ;; TODO: This should change using the variables of sprites
+	.db 6       ; height  ;; TODO: This should change using the variables of sprites
 	.db 0	    ; vel_x
 	.db 0       ; vel_y
 	.dw m_sprite;sprite  ;; TODO: We should include the sprite generated and change this
@@ -138,6 +136,7 @@ ret
 man_game_play::
     game_loop:
 
+    call sys_ai_update
 	call sys_physics_update
 	call sys_render_update
 	call man_entity_update
