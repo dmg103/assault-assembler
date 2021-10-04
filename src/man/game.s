@@ -17,12 +17,17 @@
 .globl sys_render_init
 .globl sys_render_update
 .globl sys_ai_update
+.globl sys_animation_update
 
 ;;AI behaviour functions
 .globl sys_ai_behaviour_left_right
 .globl sys_ai_behaviour_mothership
 
+;;Entity variables
 .globl entity_size
+
+;;Animations
+.globl enemy_1_anim
 
 ;Math utilities
 .globl inc_hl_number
@@ -31,12 +36,14 @@
 .globl dec_de_number
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MACROS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;Macro for creation of entity templates _
-.macro DEFINE_ENTITY_TEMPLATE _name, _type, _pos_x, _pos_y, _width, _height, _vel_x, _vel_y, _sprite, _ai_behaviour
+.macro DEFINE_ENTITY_TEMPLATE _name, _type, _pos_x, _pos_y, _width, _height, _vel_x, _vel_y, _sprite, _ai_behaviour, _anim, _anim_counter
 _name:
     .db _type           ; type -> e_type_movable | e_type_render | e_type_ai
     .db _pos_x          ; pos_x
@@ -46,7 +53,9 @@ _name:
     .db _vel_x          ; vel_x
     .db _vel_y          ; vel_y
     .dw _sprite         ; sprite TODO: We should include the sprite generated and change this
-    .dw _ai_behaviour   ;ai_behaviour (The memory direction for the function behaviour of the AI)
+    .dw _ai_behaviour   ; ai_behaviour (The memory direction for the function behaviour of the AI)
+    .dw _anim           ; anim (The memory direction nfor the animation)
+    .db _anim_counter   ; anim_counter. How much longer is our animation
 .endm
 
 
@@ -55,6 +64,7 @@ _name:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 m_sprite: .ds 30
+m_sprite_anim: .ds 30
 
 m_sprite_size = 30
 
@@ -65,17 +75,30 @@ m_sprite_mothership:
         .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
         .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
         .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
+
+m_sprite_mothership_anim:
+        .db #0x00, #0xF0, #0xF0, #0xF0, #0x00
+        .db #0x00, #0xF0, #0xF0, #0xF0, #0x00
+        .db #0x00, #0xF0, #0xF0, #0xF0, #0x00
+        .db #0x00, #0xF0, #0xF0, #0xF0, #0x00
+        .db #0x00, #0xF0, #0xF0, #0xF0, #0x00
+        .db #0x00, #0xF0, #0xF0, #0xF0, #0x00
 m_enemy_on_lane: .db #0x00
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TEMPLATES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-DEFINE_ENTITY_TEMPLATE mothership_tmpl,        11, 38,  10, 5, 6, -1, 0, m_sprite, sys_ai_behaviour_mothership
-DEFINE_ENTITY_TEMPLATE playership_tmpl,        7, 38, 180, 5, 6,  0, 0, m_sprite, 0x0000
-DEFINE_ENTITY_TEMPLATE playership_lifes_tmpl,  1,  0, 192, 5, 6,  0, 0, m_sprite, 0x0000
-DEFINE_ENTITY_TEMPLATE enemy1_tmpl,            11, 0, 40, 5, 6, 0, 0, m_sprite, sys_ai_behaviour_left_right
+DEFINE_ENTITY_TEMPLATE mothership_tmpl,        11, 38,  10, 5, 6, -1, 0, m_sprite, sys_ai_behaviour_mothership, 0x0000, 0x00
+DEFINE_ENTITY_TEMPLATE playership_tmpl,        7, 38, 180, 5, 6,  0, 0, m_sprite, 0x0000, 0x0000, 0x00
+DEFINE_ENTITY_TEMPLATE playership_lifes_tmpl,  1,  0, 192, 5, 6,  0, 0, m_sprite, 0x0000, 0x0000, 0x00
+;;OJO CON EL TYPE COM QUE 21
+DEFINE_ENTITY_TEMPLATE enemy1_tmpl,            21, 0, 40, 5, 6, 0, 0, m_sprite, sys_ai_behaviour_left_right, enemy_1_anim , 12
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; FUNCTIONS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 man_game_init::
     call man_entity_init
@@ -84,6 +107,13 @@ man_game_init::
     ;;Filling the sprite[] with  #0xFF
     ld de, #m_sprite
     ld hl, #m_sprite_mothership
+    ld bc, #m_sprite_size
+
+    call cpct_memcpy_asm
+
+    ;;Filling the sprite_anim[] with  #0xFF
+    ld de, #m_sprite_anim
+    ld hl, #m_sprite_mothership_anim
     ld bc, #m_sprite_size
 
     call cpct_memcpy_asm
@@ -127,6 +157,7 @@ man_game_play::
 
     call sys_ai_update
 	call sys_physics_update
+    call sys_animation_update
 	call sys_render_update
 	call man_entity_update
 	call cpct_waitVSYNC_asm

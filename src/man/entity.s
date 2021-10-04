@@ -9,7 +9,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; """""Variables""""
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-m_entities: .ds 110                     ;;Reserved memory for the entities array
+m_entities: .ds 140                     ;;Reserved memory for the entities array
 m_zero_type_at_the_end: .db #0x00       ;;Trick for stop the loop of entities, positioned
 max_entities: .db 10                    ;;Num of maximum entities
 m_next_free_entity: .ds 2               ;;Reserved memory for the pointer of the next free entity
@@ -19,13 +19,14 @@ m_function_given_forall: .dw #0x0000    ;;Memory direction of the function that 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global constant variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-entity_size                 = 11            ;;Total size of one entity
-entities_total_size         = 108           ;;Total size of the array of entites
+entity_size                 = 14            ;;Total size of one entity
+entities_total_size         = 140           ;;Total size of the array of entites
 entity_type_invalid         = 0x00          ;;Invalid entity type
 entity_type_render          = 0x01          ;;Renderable entity
 entity_type_movable         = 0x02          ;;Movable entity
 entity_type_controllable    = 0x04          ;;Entity controllable by input
 entity_type_ai              = 0x08          ;;Entity controllabe by AI
+entity_type_animated        = 0x10          ;;Entity that uses animations
 entity_type_dead            = 0x80          ;;Upper bit signals dead entity
 entity_type_default         = 0x7F         ;;Default entity (all bits = 1 but the one to signal dead)
 
