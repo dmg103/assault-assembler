@@ -12,6 +12,7 @@
 .globl inc_hl_number
 .globl inc_de_number
 .globl dec_hl_number
+.globl dec_de_number
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pre requirements
@@ -20,15 +21,15 @@
 ;; Modifies: de
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sys_animation_update::
-    ld de, #sys_animation_update_one_entity
+	ld de, #sys_animation_update_one_entity
 
-    ;;BC will contain the signature for the man_entity_forall_matching
-    ld bc, #0x0000
-    ld a, #entity_type_animated
-    add a, #entity_type_render
-    ld c, a
+	;;BC will contain the signature for the man_entity_forall_matching
+	ld bc, #0x0000
+	ld a, #entity_type_animated
+	add a, #entity_type_render
+	ld c, a
 
-    call man_entity_forall_matching
+	call man_entity_forall_matching
 
 ret
 
@@ -43,89 +44,67 @@ ret
 
 sys_animation_update_one_entity:
 
-    ld a, #13
-    call inc_hl_number                      ;;HL pointing to the anim counter
+	ld a, #13
+	call inc_hl_number                      ;;HL pointing to the anim counter
 
-    ld a, (hl)
-    dec a
+	ld a, (hl)
+	dec a
 
-    ld (hl), a                             ;;Updating the anim_counter
-    
-    jr z, animation_should_change 
+	ld (hl), a                             ;;Updating the anim_counter
+	
+	jr z, animation_should_change 
 
-    ret
-    animation_should_change:
+	ld a, #13
+	call dec_hl_number                      ;;HL pointing to the anim counter
 
-        ld a, #0x02
-        call dec_hl_number              ;;HL pointing to the first byte of the _anim
+	ret
+	animation_should_change:
 
-        ;;++ e->anim
+	   ld a, #0x02
+	   call dec_hl_number                  ;;HL pointing to the first byte of _anim (-->DB 41)
 
-        ld e, (hl)
-        inc hl                        
-        ld d, (hl)
-        dec hl
+	   ;;Saving into de the pos of the current _anim
+	   ld e, (hl)
+	   inc hl
+	   ld d, (hl)
+	   dec hl
 
-        ;;Now, DE is pointing to the value of HL, in this case is the memory direction for entity _anim
-        ld a, #0x04
-        call inc_de_number
+	   ld a, #0x03
+	   call inc_de_number
 
-        ld a, e 
+	   ld (hl), e 
 
-        ld (hl), a               
+	   inc hl
 
-        inc hl
+	   ld (hl), d
 
-        ld a, d
+	;;Check if the next anim we are pointing now with DE has time == 0
 
-        ld (hl), a
+	ld a, (de)
 
-        ;;After this, the entity anim memory direction is pointing to the next sprite
+	add a, #0x00
 
-        dec de
-        ld a, (de)
+	jr nz, no_cycle_ended
 
-        add a, #0x00
+	inc de							;;DE pointing to the anim which has the anim_counter set to 0
+	inc de
 
-        dec hl
+	ld a, (de)
 
-        jr nz, no_reset_cycle_animation
+	ld (hl), a
 
-        ;;In case Z is activated, we need to reset de anim, HL is still pointing to the _anim
+	dec de
+	dec hl
 
-        ;;ld (hl), a
+	ld a, (de)
 
-        ;;inc hl
+	ld (hl), a
 
-        ;;ld (hl), a
+	inc hl
 
+	no_cycle_ended:
 
-        no_reset_cycle_animation:
-
-        ;;HL is still pointing to the _anim
-
-        ld d, h
-        ld e, l                                 ;;DE pointing to the first byte of _anim
-
-        ld a, #0x04
-        call dec_hl_number                      ;;HL pointing to first byte of _sprite                 
-
-        ;;Me estoy liando con punteros y values mirar esto
-
-        ;;e->sprite = e->anim->val.sprite
-        ld a, (de)
-
-        ld (hl), a
-
-        inc de
-        inc hl
-
-        ld a, (de)
-
-        ld (hl), a
-
-
-
-        
+	ld a, #5
+	call dec_hl_number
 
 ret
