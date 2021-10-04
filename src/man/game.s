@@ -1,3 +1,7 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; GLOBL INCLUDES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;;Cpctelera video functions
 .globl cpct_waitVSYNC_asm
 .globl cpct_memcpy_asm
@@ -22,7 +26,14 @@
 
 ;Math utilities
 .globl inc_hl_number
+.globl inc_de_number
 .globl dec_hl_number
+.globl dec_de_number
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MACROS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;Macro for creation of entity templates _
 .macro DEFINE_ENTITY_TEMPLATE _name, _type, _pos_x, _pos_y, _width, _height, _vel_x, _vel_y, _sprite, _ai_behaviour
@@ -39,9 +50,10 @@ _name:
 .endm
 
 
-;; Just to know how our entities are created
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; VARIABLES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;The sprite is 4 bytes width, 6 bytesub height, so 24 bytes
 m_sprite: .ds 30
 
 m_sprite_size = 30
@@ -53,13 +65,17 @@ m_sprite_mothership:
         .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
         .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
         .db #0x00, #0xFF, #0xFF, #0xFF, #0x00
+m_enemy_on_lane: .db #0x00
 
-DEFINE_ENTITY_TEMPLATE mothership_tmpl,        11, 38,  10, 5, 6, -1, 0, m_sprite, #sys_ai_behaviour_mothership
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; TEMPLATES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+DEFINE_ENTITY_TEMPLATE mothership_tmpl,        11, 38,  10, 5, 6, -1, 0, m_sprite, sys_ai_behaviour_mothership
 DEFINE_ENTITY_TEMPLATE playership_tmpl,        7, 38, 180, 5, 6,  0, 0, m_sprite, 0x0000
 DEFINE_ENTITY_TEMPLATE playership_lifes_tmpl,  1,  0, 192, 5, 6,  0, 0, m_sprite, 0x0000
-DEFINE_ENTITY_TEMPLATE enemy1_tmpl,            11, 0, 40, 5, 6, 0, 0, m_sprite, #sys_ai_behaviour_left_right
+DEFINE_ENTITY_TEMPLATE enemy1_tmpl,            11, 0, 40, 5, 6, 0, 0, m_sprite, sys_ai_behaviour_left_right
 
-m_enemy_on_lane: .db #0x00
 
 man_game_init::
     call man_entity_init
@@ -174,6 +190,7 @@ man_game_create_enemy::
 
         ;;The enemy pos_x = mothership-> pos_x + 4 
         inc hl
+        inc de
         ld a, (hl)
         add a, #0x04
 
@@ -183,11 +200,17 @@ man_game_create_enemy::
         ld a, #0x04
         call inc_hl_number
 
+        ld a, #0x04
+        call inc_de_number
+
         ld a, (hl)
         ld (de), a
 
         ld a, #0x05
         call dec_hl_number
+
+        ld a, #0x05
+        call dec_de_number
 
     ld a, #0x01
     ld (#m_enemy_on_lane), a

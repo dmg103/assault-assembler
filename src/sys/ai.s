@@ -1,5 +1,10 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; GLOBL INCLUDES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;;Managers
 .globl man_entity_forall_matching
+.globl man_game_create_enemy
 
 ;;Entity types
 .globl entity_type_movable
@@ -9,6 +14,14 @@
 ;;Maths utilities
 .globl inc_hl_number
 .globl dec_hl_number
+.globl dec_de_number
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; VARIABLES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+m_ai_behaviour: .dw #0x0000
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -49,23 +62,21 @@ sys_ai_update_one_entity:
 
     ;;As an example, ai_behaviour is contains the function registered in C840
 
-    ld d, (hl)                     ;;D contains C8
+    ld e, (hl)                     ;;D contains 40
 
     inc hl
 
-    ld e, (hl)                     ;;E contains 40
+    ld d, (hl)                     ;;E contains C8
 
     ld a, #10
     call dec_hl_number          ;;HL pointing to the ai_behaviour
 
-    push hl
+    ld (m_ai_behaviour), de
 
-    ld h, d
-    ld l, e
-
+    ld ix, (#m_ai_behaviour)
     ;;As the result, DE contains C840
     ;;Having stored the position of the ai_behaviour jump into that behaviour, depending on the entity 
-    jp(hl)
+    jp(ix)
 
     position_after_ai_behaviour:
 ret
@@ -79,8 +90,6 @@ ret
 ;; Modifies: a, b
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sys_ai_behaviour_left_right::
-
-    pop hl
 
     inc hl                      ;;HL pointing to the entity pos_x
 
@@ -138,26 +147,29 @@ ret
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sys_ai_behaviour_mothership::
 
-    ;;pop hl
+    inc hl 
 
-    ;;inc hl 
+    ld d, #0x00
+    ld e, (hl)
 
-    ;;ld d, (hl) 
-    ;;Check if the pos_x is == 20, if pos_x & 20 == 1 -> create enemy
-    ;;ld a, #20
-    ;;and d
+    dec hl
 
-    ;;dec hl
+    ;;Check if the pos_x is == 20, if pos_x & 20 == 0 -> create enemy
+    ld a, #20
+    call dec_de_number
 
-    ;;jr z, no_create_enemy 
+    ld a, e
+    add a, #0x00
 
-    ;;call man_game_create_enemy
-    ;;no_create_enemy:
+    ;;This check is wrong im retard
+    jr nz, no_create_enemy 
 
-    ;;push hl
+    call man_game_create_enemy
+    
+    no_create_enemy:
 
+    ;;We cant use call cause that would cause another value into the stack, and that is absolutely wrong here
     call sys_ai_behaviour_left_right
-ret
-
+ret 
     
 
