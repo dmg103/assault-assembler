@@ -1,3 +1,4 @@
+.include "macros/math.s"
 .include "cpctelera.h.s"
 
 .area _DATA
@@ -7,15 +8,26 @@
 .globl _cpct_disableFirmware
 
 ;;Managers
-.globl man_game_init
-.globl man_game_play
+;;.globl man_game_init
+;;.globl man_game_play
 
 _main::
-	;;Initialize cpctelera render setting
-	call    _cpct_disableFirmware
+	
+	ld hl, #0x00
+	ld a, #0x00
 
-	call man_game_init
-	call man_game_play
+	;;.rept #5
+	;;	inc hl
+	;;.endm
+
+	jr .
+	
+	
+	;;Initialize cpctelera render setting
+	;;call    _cpct_disableFirmware
+
+	;;call man_game_init
+	;;call man_game_play
 
 
 	
